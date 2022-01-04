@@ -11,9 +11,9 @@
 #include <unistd.h>
 #include <errno.h>
  
-#include "client.h"
-#include "../common/shared_strings.h"
-#include "./autogen/client-fsm.h"
+#include "../include/client.h"
+#include "../../common/include/shared_strings.h"
+#include "../include/client-fsm.h"
 
 #define BUFSIZE 1000000
 

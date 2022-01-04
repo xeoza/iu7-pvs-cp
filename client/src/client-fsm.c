@@ -35,7 +35,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #define DEFINE_FSM
-#include "client-fsm.h"
+#include "../include/client-fsm.h"
 #include <stdio.h>
 
 /*
@@ -43,7 +43,7 @@
  *  comments, or it will be removed the next time it is generated.
  */
 /* START === USER HEADERS === DO NOT CHANGE THIS COMMENT */
-#include "./client_fsm_handlers.h"
+#include "../include/client_fsm_handlers.h"
 #include <stdlib.h>
 /* END   === USER HEADERS === DO NOT CHANGE THIS COMMENT */
 

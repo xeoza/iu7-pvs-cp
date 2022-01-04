@@ -19,7 +19,7 @@
 
 #ifndef __doxygen__
 #define OPTION_CODE_COMPILE 1
-#include "client-opts.h"
+#include "../include/client-opts.h"
 #include <sys/types.h>
 
 #include <limits.h>

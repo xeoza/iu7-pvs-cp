@@ -3,8 +3,8 @@
 #include <string.h>
 #include <resolv.h>
 
-#include "../common/shared_strings.h"
-#include "parser.h"
+#include "../../common/include/shared_strings.h"
+#include "../include/parser.h"
 
 #define MAX_STR_LENGTH 255
 #define MAX_STR_COUNT 1000000

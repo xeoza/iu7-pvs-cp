@@ -1,8 +1,8 @@
 #ifndef SMTP_CONN_H
 #define SMTP_CONN_H
 
-#include "./parser.h"
-#include "autogen/client-fsm.h"
+#include "parser.h"
+#include "client-fsm.h"
 
 typedef struct SMTP_Connection
 {

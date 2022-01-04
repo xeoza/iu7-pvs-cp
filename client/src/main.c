@@ -8,14 +8,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../common/logger/logger.h"
-#include "../common/dir_helper.h"
-#include "./client.h"
-#include "./dirwork/dir_worker.h"
-#include "./autogen/client-opts.h"
+#include "../../common/include/logger.h"
+#include "../include/dir_helper.h"
+#include "../include/client.h"
+#include "../include/dir_worker.h"
+#include "../include/client-opts.h"
 
-#define BASE_LOG_DIR "./client/build/log"
-#define BASE_MAILDIR "./client/work_mails"
+#define BASE_LOG_DIR "./build/log"
+#define BASE_MAILDIR "./work_mails"
 #define BASE_PROC_COUNT 1
 #define CHECK_PAUSE 1
 #define BASE_IS_HOME_MODE 1

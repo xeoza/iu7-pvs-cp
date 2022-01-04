@@ -1,10 +1,10 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "./dirwork/dir_worker.h"
-#include "./smtp/parser.h"
-#include "./smtp/smtp_conn.h"
-#include "../common/logger/logger.h"
+#include "dir_worker.h"
+#include "parser.h"
+#include "smtp_conn.h"
+#include "../../common/include/logger.h"
 
 int batch_files_for_processes(mail_files_t* mails, int processes_count, logger_t* logger, int pipeDescr, int is_home_mode);
 int process_mail_files(mail_files_t* mails, int start_ind, int end_ind, logger_t* logger, int pipeDescr, int is_home_mode);

@@ -6,7 +6,7 @@
 #include <time.h>
 
 #include "logger.h"
-#include "../error/error.h"
+#include "error.h"
 
 #define TIME_STR_SIZE 9
 #define DATE_STR_SIZE 11

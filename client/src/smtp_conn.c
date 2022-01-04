@@ -5,8 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "smtp_conn.h"
-#include "../autogen/client-fsm.h"
+#include "../include/smtp_conn.h"
+#include "../include/client-fsm.h"
 
 #define INIT_BUF_SIZE 1024
 

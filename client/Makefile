@@ -1,27 +1,27 @@
-program_name := client
-full_program_name := $(addprefix $(exe_directory),$(program_name)) 
-source_dirs  := . autogen ../common ../common/error ../common/logger dirwork smtp
-version := -std=c99
+CC = gcc
+CFLAGS = -Wall -ggdb3 -pedantic -g -g3 -O0 -D_GNU_SOURCE -DDEBUG
+LDFLAGS= `autoopts-config ldflags` -lm -lrt 
+VERSION := -std=c99
 
-cflags:= -Wall -pedantic 
-ldflags := `autoopts-config ldflags` -lm -lresolv
-test_ldflags := -lcunit
+INC = -I include -I ../common/include
+SRC_DIR = src
+OBJ_DIR = obj
+LIB = -lconfig -lresolv
+TARGET = client
 
-source_dirs := $(addprefix ../,$(source_dirs))
-search_wildcards := $(addsuffix /*.c,$(source_dirs))
-wildcard_source := $(wildcard $(filter-out ../*.c,$(search_wildcards)))
-wildcard_test := $(filter-out .././main.c,$(wildcard $(search_wildcards)))
+SRC = client.c  client-fsm.c  client_fsm_handlers.c  client-opts.c  dir_worker.c  main.c  parser.c  smtp_conn.c ../../common/src/dir_helper.c  ../../common/src/error.c  ../../common/src/logger.c  ../../common/src/shared_strings.c
+OBJECTS = $(patsubst %.o,$(OBJ_DIR)/%.o, $(SRC:.c=.o))
 
-$(full_program_name): $(notdir $(patsubst %.c,%.o,$(wildcard_source)))
-	gcc $(version) $^ -o $@ $(ldflags)
+all: client
 
-VPATH := $(source_dirs) 
+client: $(OBJECTS)
+	$(CC) $(VERSION) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LIB)
 
-%.o: %.c
-	gcc $(version) -c -MD $(compile_flags) $(cflags) $(addprefix -I,$(source_dirs)) $<
+$(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
+	mkdir -p $(OBJ_DIR)
+	$(CC) $(VERSION) $(LDFLAGS) -c -o $@ $< $(CFLAGS) $(INC) $(LIB)
 
-include $(wildcard *.d) 
-
-.PHONY: clean
 clean:
-	rm -rf build
+	rm -f $(OBJECTS) $(TARGET)
+
+.PHONY: client clean

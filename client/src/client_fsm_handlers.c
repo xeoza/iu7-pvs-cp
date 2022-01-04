@@ -1,6 +1,6 @@
-#include "client_fsm_handlers.h"
-#include "../smtp/smtp_conn.h"
-#include "../../common/shared_strings.h"
+#include "../include/client_fsm_handlers.h"
+#include "../include/smtp_conn.h"
+#include "../../common/include/shared_strings.h"
 #include <sys/select.h>
 #include <stdlib.h>
 #include <string.h>

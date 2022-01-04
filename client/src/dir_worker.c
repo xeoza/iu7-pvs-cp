@@ -4,7 +4,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "dir_worker.h"
+#include "../include/dir_worker.h"
 
 mail_files_t* check_directory(char* dir_path)
 {
