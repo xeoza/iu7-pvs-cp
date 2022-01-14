@@ -15,11 +15,11 @@ OBJECTS = $(patsubst %.o,$(OBJ_DIR)/%.o, $(SRC:.c=.o))
 all: client
 
 client: $(OBJECTS)
+	mkdir -p $(OBJ_DIR)
 	$(CC) $(VERSION) $(OBJECTS) -o $(TARGET) $(LIB) $(LDFLAGS)
 
 $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(VERSION) $(CFLAGS) -c -o $@ $< $(INC) $(LIB)
+	$(CC) $(VERSION) $(CFLAGS) -c -o $@ $< $(INC)
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
