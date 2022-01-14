@@ -6,7 +6,7 @@
 
 #include "../include/dir_worker.h"
 
-mail_files_t* check_directory(char* dir_path) {
+mail_files_t* check_directory(const char* dir_path) {
     char** files_names = NULL;
     struct Mail_files* result = malloc(sizeof(mail_files_t));
     if (result == NULL) {
@@ -61,7 +61,7 @@ mail_files_t* check_directory(char* dir_path) {
     return result;
 }
 
-int get_files_count(char* dir_path) {
+int get_files_count(const char* dir_path) {
     DIR* dir = NULL;
     struct dirent* entry = NULL;
     int res = 0;
@@ -89,7 +89,7 @@ int get_files_count(char* dir_path) {
     return count;
 }
 
-int get_files_names(char* dir_path, char** files_names, int files_count) {
+int get_files_names(const char* dir_path, char** files_names, int files_count) {
     DIR* dir = NULL;
     struct dirent* entry = NULL;
     int res = 0;

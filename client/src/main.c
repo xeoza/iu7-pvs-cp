@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "../../common/include/logger.h"
+#include "../../common/include/error.h"
 #include "../include/dir_helper.h"
 #include "../include/client.h"
 #include "../include/dir_worker.h"
@@ -36,17 +37,29 @@ typedef struct options_struct {
     const char* log_dir;            ///< Directory to store log files
     const char* maildir;            ///< Directory with local mails
 
-    int home_mode;               ///< Is client in home send mode
-    int proc_count;              ///< Number of working processes
+    long int home_mode;               ///< Is client in home send mode
+    long int proc_count;              ///< Number of working processes
 } options_t;
 
 options_t client_options;
 
 options_t fill_options() {
     options_t options = {.home_mode = OPT_VALUE_HOME_MODE};
-    options.proc_count = HAVE_OPT(PROC_COUNT) ? OPT_ARG(PROC_COUNT) : BASE_PROC_COUNT;
-    options.maildir = HAVE_OPT(MAIL_DIR) ? OPT_ARG(MAIL_DIR) : BASE_MAILDIR;
-    options.log_dir = HAVE_OPT(LOG_DIR) ? OPT_ARG(LOG_DIR) : BASE_LOG_DIR;
+	if (HAVE_OPT(PROC_COUNT)) {
+        options.proc_count = (long int) OPT_ARG(PROC_COUNT);
+    } else {
+        options.proc_count = BASE_PROC_COUNT;
+    }
+	if (HAVE_OPT(MAIL_DIR)) {
+        options.maildir = OPT_ARG(MAIL_DIR);
+    } else {
+        options.maildir = BASE_MAILDIR;
+    }
+	if (HAVE_OPT(LOG_DIR)) {
+        options.log_dir = OPT_ARG(LOG_DIR);
+    } else {
+        options.log_dir = BASE_LOG_DIR;
+    }
 
     return options;
 }

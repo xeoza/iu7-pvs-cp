@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -ggdb3 -pedantic -g -g3 -O0 -D_GNU_SOURCE -DDEBUG
+CFLAGS = -Wall -Werror -ggdb3 -pedantic -g -g3 -O0 -D_GNU_SOURCE -DDEBUG
 LDFLAGS= `autoopts-config ldflags` -lm -lrt 
 VERSION := -std=c99
 
