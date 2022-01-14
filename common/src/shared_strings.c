@@ -7,7 +7,7 @@
 
 size_t concat_dynamic_strings(char** str1, const char* str2, size_t str1_len, size_t str2_len) {
     size_t extended_len = str1_len + str2_len;
-    char *extended_memory = (char*) calloc(extended_len, sizeof(char));
+    char* extended_memory = (char*) calloc(extended_len, sizeof(char));
     if (!extended_memory)
         return -1;
 
@@ -23,8 +23,8 @@ size_t concat_dynamic_strings(char** str1, const char* str2, size_t str1_len, si
 
 // To del
 size_t full_send(int fd, const char* message, size_t len, int flags) {
-    size_t sent = 0;  
-    size_t curr_sent = 0;  
+    size_t sent = 0;
+    size_t curr_sent = 0;
 
     while (sent != len) {
         curr_sent = send(fd, message + sent, len - sent, flags);

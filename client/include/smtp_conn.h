@@ -4,8 +4,7 @@
 #include "parser.h"
 #include "client-fsm.h"
 
-typedef struct SMTP_Connection
-{
+typedef struct SMTP_Connection {
     mail_t* mail;
     char* to;
     char* from;
@@ -24,7 +23,9 @@ typedef struct SMTP_Connection
 } conn_t;
 
 conn_t* init_connection(mail_t* curr_mail, int to_num);
+
 int connection_start(conn_t* connection);
+
 void clear_connection(conn_t* connection);
 
 #endif
