@@ -6,15 +6,12 @@
 #include <unistd.h>
 
 #include "../include/smtp_conn.h"
-#include "../include/client-fsm.h"
 
 #define INIT_BUF_SIZE 1024
 
-conn_t* init_connection(mail_t* curr_mail, int to_num)
-{
+conn_t* init_connection(mail_t* curr_mail, int to_num) {
     conn_t* new_conn = malloc(sizeof(conn_t));
-    if(new_conn == NULL)
-    {
+    if (new_conn == NULL) {
         printf("Can't allocate memory for new connection\n");
         return NULL;
     }
@@ -33,13 +30,11 @@ conn_t* init_connection(mail_t* curr_mail, int to_num)
     return new_conn;
 }
 
-int connection_start(conn_t* connection)
-{
+int connection_start(conn_t* connection) {
     struct sockaddr_in addr;
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) 
-    {
+    if (sock < 0) {
         printf("Can't create socket\n");
         return -1;
     }
@@ -49,8 +44,7 @@ int connection_start(conn_t* connection)
     addr.sin_addr.s_addr = inet_addr(connection->host);
     addr.sin_port = htons(connection->port);
 
-    if (connect(sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) 
-    {
+    if (connect(sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         printf("Can't connect socket\n");
         return -1;
     }
@@ -60,18 +54,14 @@ int connection_start(conn_t* connection)
     return 0;
 }
 
-void clear_connection(conn_t* connection)
-{
-    if(connection->receive_buf)
-    {
+void clear_connection(conn_t* connection) {
+    if (connection->receive_buf) {
         free(connection->receive_buf);
     }
-    if(connection->send_buf)
-    {
+    if (connection->send_buf) {
         free(connection->send_buf);
     }
-    if(connection->socket)
-    {
+    if (connection->socket) {
         close(connection->socket);
     }
     free(connection);

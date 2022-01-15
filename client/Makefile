@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -ggdb3 -pedantic -g -g3 -O0 -D_GNU_SOURCE -DDEBUG
+CFLAGS = -Wall -Werror -ggdb3 -pedantic -g -g3 -O0 -D_GNU_SOURCE -DDEBUG
 LDFLAGS= `autoopts-config ldflags` -lm -lrt 
 VERSION := -std=c99
 
@@ -15,11 +15,11 @@ OBJECTS = $(patsubst %.o,$(OBJ_DIR)/%.o, $(SRC:.c=.o))
 all: client
 
 client: $(OBJECTS)
-	$(CC) $(VERSION) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LIB)
+	mkdir -p $(OBJ_DIR)
+	$(CC) $(VERSION) $(OBJECTS) -o $(TARGET) $(LIB) $(LDFLAGS)
 
 $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(VERSION) $(LDFLAGS) -c -o $@ $< $(CFLAGS) $(INC) $(LIB)
+	$(CC) $(VERSION) $(CFLAGS) -c -o $@ $< $(INC)
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)

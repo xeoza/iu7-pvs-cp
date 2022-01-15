@@ -1,5 +1,4 @@
 #include "../include/client_fsm_handlers.h"
-#include "../include/smtp_conn.h"
 #include "../../common/include/shared_strings.h"
 #include <sys/select.h>
 #include <stdlib.h>
@@ -8,10 +7,9 @@
 
 #define DOMAIN "arisaka.com"
 
-te_client_fsm_state HANDLE_CONNECT(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_CONNECT(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
-    fd_set* set = (fd_set*)writeFS;
+    fd_set* set = (fd_set*) writeFS;
 
     connect->state = next_state;
     char* comm = NULL;
@@ -26,10 +24,9 @@ te_client_fsm_state HANDLE_CONNECT(te_client_fsm_state next_state, void* connect
     return next_state;
 }
 
-te_client_fsm_state HANDLE_EHLO(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_EHLO(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
-    fd_set* set = (fd_set*)writeFS;
+    fd_set* set = (fd_set*) writeFS;
 
     connect->state = next_state;
     char* comm = NULL;
@@ -44,10 +41,9 @@ te_client_fsm_state HANDLE_EHLO(te_client_fsm_state next_state, void* connection
     return next_state;
 }
 
-te_client_fsm_state HANDLE_QUIT(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_QUIT(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
-    fd_set* set = (fd_set*)writeFS;
+    fd_set* set = (fd_set*) writeFS;
 
     connect->state = next_state;
     char* comm = NULL;
@@ -56,21 +52,11 @@ te_client_fsm_state HANDLE_QUIT(te_client_fsm_state next_state, void* connection
     connect->to_send = new_len;
     free(comm);
     FD_SET(connect->socket, set);
-    
+
     return next_state;
 }
 
-te_client_fsm_state HANDLE_FINISH(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
-    conn_t* connect = (conn_t*) connection;
-
-    connect->state = next_state;
-    
-    return next_state;
-}
-
-te_client_fsm_state HANDLE_ERROR(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_FINISH(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
 
     connect->state = next_state;
@@ -78,10 +64,17 @@ te_client_fsm_state HANDLE_ERROR(te_client_fsm_state next_state, void* connectio
     return next_state;
 }
 
-te_client_fsm_state HANDLE_MF(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_ERROR(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
-    fd_set* set = (fd_set*)writeFS;
+
+    connect->state = next_state;
+
+    return next_state;
+}
+
+te_client_fsm_state HANDLE_MF(te_client_fsm_state next_state, void* connection, void* writeFS) {
+    conn_t* connect = (conn_t*) connection;
+    fd_set* set = (fd_set*) writeFS;
 
     connect->state = next_state;
     char* comm = NULL;
@@ -96,10 +89,9 @@ te_client_fsm_state HANDLE_MF(te_client_fsm_state next_state, void* connection, 
     return next_state;
 }
 
-te_client_fsm_state HANDLE_RT(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_RT(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
-    fd_set* set = (fd_set*)writeFS;
+    fd_set* set = (fd_set*) writeFS;
 
     connect->state = next_state;
     char* comm = NULL;
@@ -113,16 +105,14 @@ te_client_fsm_state HANDLE_RT(te_client_fsm_state next_state, void* connection, 
     return next_state;
 }
 
-te_client_fsm_state HANDLE_DATA(te_client_fsm_state next_state, void* connection, void* writeFS) 
-{
+te_client_fsm_state HANDLE_DATA(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;
-    fd_set* set = (fd_set*)writeFS;
+    fd_set* set = (fd_set*) writeFS;
 
     connect->state = next_state;
     char* comm = NULL;
     char* text = concat_mail_text(connect->mail->mail_text, connect->mail->text_len);
-    if(text == NULL)
-    {
+    if (text == NULL) {
         printf("Can't allocate data for mail text to send\n");
         te_client_fsm_state state = HANDLE_ERROR(CLIENT_FSM_ST_S_ERROR, connection, writeFS);
         return state;
@@ -138,12 +128,10 @@ te_client_fsm_state HANDLE_DATA(te_client_fsm_state next_state, void* connection
     return next_state;
 }
 
-char* concat_mail_text(char** mail_text, int text_len)
-{
+char* concat_mail_text(char** mail_text, int text_len) {
     char* text = NULL;
     int new_len = 0;
-    for(int i = 0; i < text_len; i++)
-    {
+    for (int i = 0; i < text_len; i++) {
         new_len = concat_dynamic_strings(&text, mail_text[i], new_len, strlen(mail_text[i]));
     }
     return text;

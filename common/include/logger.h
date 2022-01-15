@@ -42,7 +42,9 @@ typedef struct log_msg_struct {
 } log_msg_t;
 
 logger_t* logger_init(const char* log_dir, unsigned const char logger_options);
+
 int logger_log(logger_t* logger_sender, log_msg_type_t type, const char* message);
+
 void logger_free(logger_t* logger_sender);
 
 #endif
