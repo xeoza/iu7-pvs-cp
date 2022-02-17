@@ -1,5 +1,5 @@
 CPPFLAGS += -I./include
-CFLAGS += -D_GNU_SOURCE
+CFLAGS += -std=c99 -D_GNU_SOURCE -g -O0
 
 SOURCES = $(wildcard ./src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
@@ -11,7 +11,7 @@ libcommon.a: $(OBJECTS)
 	$(AR) rcs $@ $(OBJECTS)
 
 tests.out: $(TEST_OBJECTS) libcommon.a
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(TEST_OBJECTS) libcommon.a $(LDLIBS)
+	$(CC) $(CFLAGS) -lcunit -o $@ $(TEST_OBJECTS) libcommon.a $(LDLIBS)
 
 tests: test_units test_style test_memory
 
