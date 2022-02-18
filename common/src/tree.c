@@ -89,10 +89,6 @@ void insert_tree_node(tree_node_t** root, tree_node_t* node) {
     if (!node) {
         return;
     }
-    if (!*root) {
-        *root = node;
-        return;
-    }
 
     tree_node_t** p = root;
     tree_node_t* parent = NULL;
@@ -112,6 +108,11 @@ void insert_tree_node(tree_node_t** root, tree_node_t* node) {
     *p = node;
     node->color = 'r';
     node->parent = parent;
+    if (!parent) {
+        list_init(&node->list);
+    } else {
+        list_add(&parent->list, &node->list);
+    }
     fix_after_insert(root, node);
 }
 

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "list.h"
+
 typedef struct tree_node_struct tree_node_t;
 
 struct tree_node_struct {
@@ -13,6 +15,7 @@ struct tree_node_struct {
     tree_node_t* left;
     tree_node_t* right;
     char color;
+    struct list_head list;
 };
 
 static inline tree_node_t* make_tree_node(const char* key, void* value) {
@@ -26,6 +29,7 @@ static inline tree_node_t* make_tree_node(const char* key, void* value) {
     node->left = NULL;
     node->right = NULL;
     node->color = 'b';
+    list_init(&node->list);
     return node;
 }
 
@@ -54,7 +58,9 @@ int dict_has(const dict_t* dict, const char* key);
 
 int dict_set(dict_t* dict, const char* key, void* value);
 
-int dict_get(const dict_t* dict, const char* key, void** value);
+int dict_get(const dict_t* dict, const char* key, void** value); 
+
+#define tree_foreach(root, node) list_foreach(node, (root)->list, list)
 
 #endif // TREE_H
 
