@@ -1,6 +1,7 @@
 #include "string_utils.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -9,7 +10,7 @@ char* strtrim(char* str) {
     char* start = str;
     char* end = str;
     for (char* c = str; *c != 0; ++c) {
-        if (*c != ' ') {
+        if (isspace(c)) {
             if (start == end)
                 start = c;
             end = c + 1;

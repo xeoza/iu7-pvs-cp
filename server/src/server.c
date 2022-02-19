@@ -1,6 +1,7 @@
 #include "server.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +45,7 @@ int server_start(int port, const dict_t* config) {
     if (server_socket == -1) {
         return -1;
     }
+    debug("Server socket is open\n");
 
     dict_t sessions;
     fd_set fds, readfds;
@@ -67,21 +69,29 @@ int server_start(int port, const dict_t* config) {
             char session_key[SESSION_KEY_MAX_LEN] = { 0 };
             char reply[SERVER_REPLY_MAX_LEN] = { 0 };
             if (FD_ISSET(fd, &readfds)) {
-                debug("%d file descriptor is ready\n", fd);
                 if (fd == server_socket) {
-                    struct sockaddr_storage client_addr;
-                    socklen_t len;
+                    struct sockaddr_in client_addr;
+                    socklen_t len = sizeof(client_addr);
+                    debug("Incoming connection\n");
                     int client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &len);
                     if (client_socket < 0) {
+                        debug("Failed accept: errno=%d\n", errno);
                         continue;  //TODO: error handling
                     }
                     smtp_session_t* session = (smtp_session_t*)malloc(sizeof(smtp_session_t));
+                    session->addr = client_addr.sin_addr;
+                    session->envelope.data = NULL;
+                    session->envelope.from = NULL;
+                    session->envelope.recipients = NULL;
+                    session->state = INITIAL;
                     if (!session) {
+                        debug("Failed create session\n");
                         close(client_socket);
                         continue;
                     }
                     snprintf(session_key, SESSION_KEY_MAX_LEN, "%d", client_socket);
                     if (dict_set(&sessions, session_key, (void*)session) != 0) {
+                        debug("Failed create session\n");
                         free(session);
                         close(client_socket);
                         continue;
@@ -91,26 +101,49 @@ int server_start(int port, const dict_t* config) {
                         nfds = client_socket + 1;
                     }
                     smtp_start_session(session, reply, SERVER_REPLY_MAX_LEN);
+                    debug("New session started\n");
                     send(client_socket, reply, strlen(reply), 0);
                 } else {
-                    char command[SERVER_COMMAND_MAX_LEN] = { 0 };
-                    if (recv(fd, command, SERVER_COMMAND_MAX_LEN, 0) <= 0) {
-                        close(fd);
-                        FD_CLR(fd, &fds);
-                        continue;
-                    }
                     snprintf(session_key, SESSION_KEY_MAX_LEN, "%d", fd);
                     smtp_session_t* session = NULL;
                     if (dict_get(&sessions, session_key, (void**)&session) == -1 || !session) {
                         continue;
                     }
-                    int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN, mail_path);
-                    send(fd, reply, strlen(reply), 0);
-                    if (ret < 0) {
+
+                    char buf[SERVER_COMMAND_MAX_LEN] = { 0 };
+                    if (recv(fd, buf, sizeof(buf) - 1, 0) <= 0) {
                         close(fd);
                         FD_CLR(fd, &fds);
-                        free(session);
-                        dict_set(&sessions, session_key, NULL);
+                        continue;
+                    }
+
+                    unsigned int i;
+                    char* b;
+                    char* e;
+                    for (b = buf, e = buf, i = 0; *e != 0; ++e) {
+                        char command[SERVER_COMMAND_MAX_LEN] = { 0 };
+                        if (i == 0 && *e == '\r' || i == 1 && *e == '\n') {
+                            ++i;
+                        } else {
+                            i = 0;
+                        }
+
+                        if (i == 2) {
+                            strncpy(command, b, e + 1 - b);
+                            debug("Received command: %s\n", command);
+                            int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN, mail_path);
+                            send(fd, reply, strlen(reply), 0);
+                            debug("Sent reply: %s\n", reply);
+                            if (ret < 0) {
+                                close(fd);
+                                FD_CLR(fd, &fds);
+                                free(session);
+                                dict_set(&sessions, session_key, NULL);
+                                debug("Session finalized\n");
+                            }
+                            b = e + 1;
+                            i = 0;
+                        }
                     }
                 }
             }

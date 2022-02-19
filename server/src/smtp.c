@@ -10,7 +10,7 @@
 #include "string_utils.h"
 
 #define REGEX_ATOM "([0-9a-zA-Z\\-]+)"
-#define REGEX_DOMAIN "(" REGEX_ATOM "(\\." REGEX_ATOM ")*"
+#define REGEX_DOMAIN "(" REGEX_ATOM "(\\." REGEX_ATOM ")*)"
 #define REGEX_MAIL "(" REGEX_DOMAIN "@" REGEX_DOMAIN ")"
 
 static void envelope_free(smtp_envelope_t* envelope) {
@@ -59,7 +59,7 @@ static int smtp_ehlo(const char* command, smtp_session_t* session, char* reply, 
 static int smtp_mail(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
     regmatch_t matches[1];
-    regcomp(&regex, "^MAIL FROM:<" REGEX_MAIL ">.*\r\n$", REG_EXTENDED);
+    regcomp(&regex, "^MAIL FROM:<" REGEX_MAIL ">.*$", REG_EXTENDED);
     if (regexec(&regex, command, 1, matches, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != ESTABLISHED) {
@@ -82,7 +82,7 @@ static int smtp_mail(const char* command, smtp_session_t* session, char* reply, 
 static int smtp_rcpt(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
     regmatch_t matches[1];
-    regcomp(&regex, "$RCPT TO:<" REGEX_MAIL ">\r\n^", REG_EXTENDED);
+    regcomp(&regex, "^RCPT TO:<" REGEX_MAIL ">$", REG_EXTENDED);
     if (regexec(&regex, command, 1, matches, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != MAIL_RCPT) {
@@ -109,7 +109,7 @@ static int smtp_rcpt(const char* command, smtp_session_t* session, char* reply, 
 
 static int smtp_data(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
-    regcomp(&regex, "$DATA\r\n^", REG_EXTENDED);
+    regcomp(&regex, "^DATA$", REG_EXTENDED);
     if (regexec(&regex, command, 0, NULL, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != MAIL_RCPT) {
@@ -147,7 +147,7 @@ static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path)
 }
 
 static int smtp_read_data(const char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path) {
-    if (strcmp(".\r\n", command) == 0) {
+    if (strcmp(".", command) == 0) {
         if (envelope_save(&session->envelope, mail_path)) {
             snprintf(reply, len, "500\r\n");
         } else {
