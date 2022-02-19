@@ -3,13 +3,16 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "list.h"
+
+#define TREE_KEY_MAX_LEN 128
 
 typedef struct tree_node_struct tree_node_t;
 
 struct tree_node_struct {
-    const char* key;
+    char key[TREE_KEY_MAX_LEN];
     void* value;
     tree_node_t* parent;
     tree_node_t* left;
@@ -23,7 +26,7 @@ static inline tree_node_t* make_tree_node(const char* key, void* value) {
     if (!node) {
         return NULL;
     }
-    node->key = key;
+    strncpy(node->key, key, TREE_KEY_MAX_LEN);
     node->value = value;
     node->parent = NULL;
     node->left = NULL;
