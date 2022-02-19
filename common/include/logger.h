@@ -41,10 +41,28 @@ typedef struct log_msg_struct {
     log_msg_payload_t msg_payload;
 } log_msg_t;
 
+/**
+ * Конструкторо логировщика
+ * @param log_dir
+ * @param logger_options
+ * @return
+ */
 logger_t* logger_init(const char* log_dir, unsigned const char logger_options);
 
+/**
+ * Логирование сообщения
+ * @param log_dir
+ * @param logger_options
+ * @return
+ */
 int logger_log(logger_t* logger_sender, log_msg_type_t type, const char* message);
 
+/**
+ * Деструктор логировщика
+ * @param log_dir
+ * @param logger_options
+ * @return
+ */
 void logger_free(logger_t* logger_sender);
 
 #endif
