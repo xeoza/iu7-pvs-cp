@@ -56,6 +56,6 @@ static inline void list_del(struct list_head* element) {
 }
 
 #define list_foreach(pos, head, member) \
-    for (pos = container_of((head)->next, typeof(*pos), member); &pos->member != (head); pos = container_of(pos->next, typeof(*pos), member)) 
+    for (pos = container_of((head), typeof(*pos), member); pos; pos = pos->member.next != (head) ? container_of(pos->member.next, typeof(*pos), member) : NULL) 
 
 #endif  // LIST_H

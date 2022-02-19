@@ -60,7 +60,7 @@ int dict_set(dict_t* dict, const char* key, void* value);
 
 int dict_get(const dict_t* dict, const char* key, void** value); 
 
-#define tree_foreach(root, node) list_foreach(node, (root)->list, list)
+#define tree_foreach(root, node) list_foreach(node, &(root)->list, list)
 
 #endif // TREE_H
 
