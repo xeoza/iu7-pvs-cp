@@ -5,5 +5,7 @@
 
 void test_strtrim();
 
+void test_strstartswith();
+
 #endif  // STRING_UTILS_TEST_H
 

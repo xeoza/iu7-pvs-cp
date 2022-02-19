@@ -29,3 +29,21 @@ void test_strtrim() {
     }
 }
 
+void test_strstartswith() {
+    {
+        CU_ASSERT_TRUE(strstartswith("abcd", ""));
+    }
+
+    {
+        CU_ASSERT_TRUE(strstartswith("abcd", "ab"));
+    }
+
+    {
+        CU_ASSERT_FALSE(strstartswith("abcd", "bc"));
+    }
+
+    {
+        CU_ASSERT_FALSE(strstartswith("abc", "abcd"));
+    }
+}
+

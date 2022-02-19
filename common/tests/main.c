@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
 
     CU_pSuite string_utils_suite = CU_add_suite("Test string_utils.h", NULL, NULL);
     CU_ADD_TEST(string_utils_suite, test_strtrim);
+    CU_ADD_TEST(string_utils_suite, test_strstartswith);
 
     CU_basic_run_tests();
 

@@ -1,6 +1,7 @@
 #include "string_utils.h"
 
 #include <assert.h>
+#include <stddef.h>
 #include <string.h>
 
 char* strtrim(char* str) {
@@ -16,5 +17,17 @@ char* strtrim(char* str) {
     }
     *end = 0;
     return start;
+}
+
+int strstartswith(const char* str, const char* prefix) {
+    assert(str);
+    assert(prefix);
+    size_t i;
+    for (i = 0; str[i] != 0 && prefix[i] != 0; ++i) {
+        if (str[i] != prefix[i]) {
+            return 0;
+        }
+    }
+    return prefix[i] == 0;
 }
 
