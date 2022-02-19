@@ -48,10 +48,13 @@ int server_start(int port, const dict_t* config) {
     dict_t sessions;
     fd_set fds, readfds;
     int nfds = server_socket + 1;
+    const char* mail_path = "./mail";
     dict_init(&sessions);
     FD_ZERO(&fds);
     FD_ZERO(&readfds);
     FD_SET(server_socket, &fds);
+
+    dict_get(config, "mail_path", (void**)&mail_path);
 
     while (1) {
         readfds = fds;
@@ -101,7 +104,7 @@ int server_start(int port, const dict_t* config) {
                     if (dict_get(&sessions, session_key, (void**)&session) == -1 || !session) {
                         continue;
                     }
-                    int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN);
+                    int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN, mail_path);
                     send(fd, reply, strlen(reply), 0);
                     if (ret < 0) {
                         close(fd);

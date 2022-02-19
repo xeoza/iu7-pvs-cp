@@ -33,7 +33,7 @@ int smtp_start_session(smtp_session_t* session, char* reply, size_t len);
 
 void smtp_free_session(smtp_session_t* session);
 
-int smtp_process_command(char* command, smtp_session_t* session, char* reply, size_t len);
+int smtp_process_command(char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path);
 
 #endif  // SMTP_H
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "list.h"
 #include "string_utils.h"
@@ -121,9 +122,38 @@ static int smtp_data(const char* command, smtp_session_t* session, char* reply, 
     return 0;
 }
 
-static int smtp_read_data(const char* command, smtp_session_t* session, char* reply, size_t len) {
+static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path) {
+    char date[10];
+    time_t now = time(NULL);
+    struct tm* tm = localtime(&now);
+    strftime(date, sizeof(date), "%Y-%m-%d", tm);
+
+    smtp_line_t* recipient = NULL;
+    list_foreach(recipient, envelope->recipients, list) {
+        char file_path[512];
+        FILE* file;
+        snprintf(file_path, sizeof(file_path), "%s/%s/%s_%s", mail_path, recipient->data, date, envelope->from);
+ 
+        if (!(file = fopen(file_path, "w"))) {
+            return -1;
+        }
+        smtp_line_t* line = NULL;
+        list_foreach(line, envelope->data, list) {
+            fputs(line->data, file);
+        }
+        fclose(file);
+    }
+    return 0;
+}
+
+static int smtp_read_data(const char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path) {
     if (strcmp(".\r\n", command) == 0) {
-        
+        if (envelope_save(&session->envelope, mail_path)) {
+            snprintf(reply, len, "500\r\n");
+        } else {
+            snprintf(reply, len, "250 OK\r\n");
+        }
+        session_reset(session, ESTABLISHED);
     } else {
         const size_t data_len = strlen(command);
         smtp_line_t* data = (smtp_line_t*)malloc(sizeof(smtp_line_t) + data_len + 1);
@@ -163,9 +193,11 @@ static int smtp_quit(char* command, smtp_session_t* session, char* reply, size_t
     return -1;
 }
 
-int smtp_process_command(char* command, smtp_session_t* session, char* reply, size_t len) {
+
+
+int smtp_process_command(char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path) {
     if (session->state == MAIL_DATA) {
-        return smtp_read_data(command, session, reply, len);
+        return smtp_read_data(command, session, reply, len, mail_path);
     }
     command = strtrim(command);
     if (strstartswith(command, "EHLO")) {
