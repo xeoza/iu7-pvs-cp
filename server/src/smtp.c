@@ -1,8 +1,6 @@
 #include "smtp.h"
 
 #include <regex.h>
-#include <_regex.h>
-#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
