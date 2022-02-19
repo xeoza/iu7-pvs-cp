@@ -7,7 +7,7 @@ OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 all: server
 
 server: $(OBJECTS)
-	$(CC) $(CFLAGS) -L../common -lpthread -lcommon -o $@ $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS)   -L../common -lpthread -lcommon
 
 clean:
 	rm -rf $(OBJECTS) server
