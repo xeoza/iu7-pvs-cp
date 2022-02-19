@@ -5,7 +5,6 @@
 
 void exit_on_error(const char* error_text) {
     perror(error_text);
-
     exit(errno);
 }
 

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define DOMAIN "arisaka.com"
+#define DOMAIN "alfabank.com"
 
 te_client_fsm_state HANDLE_CONNECT(te_client_fsm_state next_state, void* connection, void* writeFS) {
     conn_t* connect = (conn_t*) connection;

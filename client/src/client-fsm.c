@@ -233,7 +233,8 @@ client_fsm_invalid_transition( te_client_fsm_state st, te_client_fsm_event evt )
 
 /**
  *  Step the FSM.  Returns the resulting state.  If the current state is
- *  CLIENT_FSM_ST_DONE or CLIENT_FSM_ST_INVALID, it resets to
+ *  CLIENT_FSM_ST_DONE
+ *  or CLIENT_FSM_ST_INVALID, it resets to
  *  CLIENT_FSM_ST_INIT and returns CLIENT_FSM_ST_INIT.
  */
 te_client_fsm_state
