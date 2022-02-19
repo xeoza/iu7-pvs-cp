@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "ini.h"
+#include "server.h"
 #include "tree.h"
 
 #define HELP \
@@ -58,6 +59,14 @@ int main(int argc, char* argv[]) {
         puts(HELP);
         exit(-1);
     }
+    if (!port_from_args) {
+        char *port_str = NULL;
+        if (dict_get(&config, "port", (void**)&port_str) == 0) {
+            port = atoi(port_str);
+        }
+    }
+
+    int ret = server_start(port, &config);
 
     // Clear config
     tree_node_t* node = NULL;
@@ -66,6 +75,6 @@ int main(int argc, char* argv[]) {
     }
     dict_free(&config);
 
-    return 0;
+    return ret;
 }
 
