@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
      */
     signal(SIGTERM, close_handler);
 
-    logger = logger_init(client_options.log_dir, CONSOLE_PRINT | FILE_PRINT);
+    logger = logger_init(client_options.log_dir, INFO_LOG);
     if (!logger) {
         printf("Can't init logger\n");
         close(pipefd[0]);
