@@ -10,9 +10,9 @@
 #define MAX_TO_COUNT 16
 #define MAX_RECORD_LENGTH 2048
 
-#define HOME_HOST "arasaka.com"
+#define HOME_HOST "alfabank.com"
 #define HOME_IP "127.0.0.1"
-#define HOME_PORT 2525
+#define HOME_PORT 3001
 #define SMTP_PORT 25
 #define MAX_HOST_ADR_LEN 256
 
