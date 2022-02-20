@@ -4,10 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/_types/_s_ifmt.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
-#include <sys/syslimits.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 

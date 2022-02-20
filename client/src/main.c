@@ -140,7 +140,6 @@ int main_loop() {
             logger_log(logger, ERROR_LOG, "Error while checking mails directory\n");
             run = 0;
         } else if (mails->count == 0) {
-            logger_log(logger, INFO_LOG, "Nothing to send\n");
             sleep(CHECK_PAUSE);
         } else {
             logger_log(logger, INFO_LOG, "Some mails in directory\n");
