@@ -47,3 +47,15 @@ void test_strstartswith() {
     }
 }
 
+void test_strcrlf() {
+    {
+        char s[] = "abcde";
+        CU_ASSERT_PTR_EQUAL(s + sizeof(s) - 1, strcrlf(s));
+    }
+
+    {
+        char s[] = "abcde\r\nfgh\r\n";
+        CU_ASSERT_PTR_EQUAL(s + 7, strcrlf(s));
+    }
+}
+

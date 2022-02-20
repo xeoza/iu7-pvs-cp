@@ -5,5 +5,7 @@ char* strtrim(char* str);
 
 int strstartswith(const char* str, const char* prefix);
 
+const char* strcrlf(const char* str);
+
 #endif  // STRING_UTILS_H
 

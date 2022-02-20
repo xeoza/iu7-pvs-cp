@@ -10,7 +10,7 @@ char* strtrim(char* str) {
     char* start = str;
     char* end = str;
     for (char* c = str; *c != 0; ++c) {
-        if (isspace(c)) {
+        if (!isspace(*c)) {
             if (start == end)
                 start = c;
             end = c + 1;
@@ -30,5 +30,21 @@ int strstartswith(const char* str, const char* prefix) {
         }
     }
     return prefix[i] == 0;
+}
+
+const char* strcrlf(const char* str) {
+    const char *pattern = "\r\n";
+    const char* sp;
+    const char* pp;
+    assert(str);
+    assert(pattern);
+    for (sp = str, pp = pattern; *sp != 0 && *pp != 0; ++sp) {
+        if (*sp == *pp) {
+            ++pp;
+        } else {
+            pp = pattern;
+        }
+    }
+    return sp;
 }
 
