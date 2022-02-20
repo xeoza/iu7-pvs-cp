@@ -173,7 +173,7 @@ static int smtp_read_data(const char* command, smtp_session_t* session, char* re
 }
 
 static int smtp_reset(char* command, smtp_session_t* session, char* reply, size_t len) {
-    if (strcmp("RSET\r\n", command) != 0) {
+    if (strcmp("RSET", command) != 0) {
         snprintf(reply, len, "500\r\n");
     } else {
         session_reset(session, session->state == INITIAL ? INITIAL : ESTABLISHED);
@@ -183,7 +183,7 @@ static int smtp_reset(char* command, smtp_session_t* session, char* reply, size_
 }
 
 static int smtp_quit(char* command, smtp_session_t* session, char* reply, size_t len) {
-    if (strcmp("QUIT\r\n", command) != 0) {
+    if (strcmp("QUIT", command) != 0) {
         snprintf(reply, len, "500\r\n");
     } else {
         smtp_free_session(session);
