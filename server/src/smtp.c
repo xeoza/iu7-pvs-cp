@@ -58,18 +58,19 @@ static int smtp_ehlo(const char* command, smtp_session_t* session, char* reply, 
 
 static int smtp_mail(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
-    regmatch_t matches[1];
+    regmatch_t matches[2];
     regcomp(&regex, "^MAIL FROM:<" REGEX_MAIL ">.*$", REG_EXTENDED);
-    if (regexec(&regex, command, 1, matches, 0) != 0) {
+    if (regexec(&regex, command, 2, matches, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != ESTABLISHED) {
         snprintf(reply, len, "503\r\n");
     } else {
-        const size_t from_len = matches[0].rm_eo - matches[0].rm_so;
+        const size_t from_len = matches[1].rm_eo - matches[1].rm_so;
         session->state = MAIL_RCPT;
-        session->envelope.from = (char*)malloc(from_len * sizeof(char));
+        session->envelope.from = (char*)malloc(sizeof(char) * from_len);
+        memset(session->envelope.from, 0, sizeof(char) * from_len);
         if (session->envelope.from) {
-            strncpy(session->envelope.from, command + matches[0].rm_so, from_len);
+            strncpy(session->envelope.from, command + matches[1].rm_so, from_len);
             snprintf(reply, len, "250 OK\r\n");
         } else {
             snprintf(reply, len, "500\r\n");
@@ -81,18 +82,19 @@ static int smtp_mail(const char* command, smtp_session_t* session, char* reply, 
 
 static int smtp_rcpt(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
-    regmatch_t matches[1];
+    regmatch_t matches[2];
     regcomp(&regex, "^RCPT TO:<" REGEX_MAIL ">$", REG_EXTENDED);
-    if (regexec(&regex, command, 1, matches, 0) != 0) {
+    if (regexec(&regex, command, 2, matches, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != MAIL_RCPT) {
         snprintf(reply, len, "503\r\n");
     } else {
-        const size_t recipient_len = matches[0].rm_eo - matches[0].rm_so;
-        smtp_line_t* recipient = (smtp_line_t*)malloc(sizeof(smtp_line_t) + recipient_len + 1);
+        const size_t recipient_len = matches[1].rm_eo - matches[1].rm_so;
+        smtp_line_t* recipient = (smtp_line_t*)malloc(sizeof(smtp_line_t) + sizeof(char) * (recipient_len + 1));
+        memset(recipient, 0, sizeof(smtp_line_t) + sizeof(char) * (recipient_len + 1));
         if (recipient) {
             list_init(&recipient->list);
-            strncpy(recipient->data, command + matches[0].rm_so, recipient_len);
+            strncpy(recipient->data, command + matches[1].rm_so, recipient_len);
             if (!session->envelope.recipients) {
                 session->envelope.recipients = &recipient->list;
             } else {
@@ -123,7 +125,7 @@ static int smtp_data(const char* command, smtp_session_t* session, char* reply, 
 }
 
 static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path) {
-    char date[10];
+    char date[11] = { 0 };
     time_t now = time(NULL);
     struct tm* tm = localtime(&now);
     strftime(date, sizeof(date), "%Y-%m-%d", tm);
@@ -147,7 +149,7 @@ static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path)
 }
 
 static int smtp_read_data(const char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path) {
-    if (strcmp(".", command) == 0) {
+    if (strcmp(".\r\n", command) == 0) {
         if (envelope_save(&session->envelope, mail_path)) {
             snprintf(reply, len, "500\r\n");
         } else {
@@ -156,7 +158,8 @@ static int smtp_read_data(const char* command, smtp_session_t* session, char* re
         session_reset(session, ESTABLISHED);
     } else {
         const size_t data_len = strlen(command);
-        smtp_line_t* data = (smtp_line_t*)malloc(sizeof(smtp_line_t) + data_len + 1);
+        smtp_line_t* data = (smtp_line_t*)malloc(sizeof(smtp_line_t) + sizeof(char) * (data_len + 1));
+        memset(data, 0, sizeof(smtp_line_t) + sizeof(char) * (data_len + 1));
         if (data) {
             list_init(&data->list);
             strncpy(data->data, command, data_len);

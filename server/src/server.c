@@ -13,6 +13,7 @@
 
 #include "debug.h"
 #include "smtp.h"
+#include "string_utils.h"
 #include "tree.h"
 
 #define SESSION_KEY_MAX_LEN 8
@@ -117,32 +118,21 @@ int server_start(int port, const dict_t* config) {
                         continue;
                     }
 
-                    unsigned int i;
-                    char* b;
-                    char* e;
-                    for (b = buf, e = buf, i = 0; *e != 0; ++e) {
+                    for (const char* start = buf; *start != 0;) {
                         char command[SERVER_COMMAND_MAX_LEN] = { 0 };
-                        if (i == 0 && *e == '\r' || i == 1 && *e == '\n') {
-                            ++i;
-                        } else {
-                            i = 0;
-                        }
-
-                        if (i == 2) {
-                            strncpy(command, b, e + 1 - b);
-                            debug("Received command: %s\n", command);
-                            int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN, mail_path);
-                            send(fd, reply, strlen(reply), 0);
-                            debug("Sent reply: %s\n", reply);
-                            if (ret < 0) {
-                                close(fd);
-                                FD_CLR(fd, &fds);
-                                free(session);
-                                dict_set(&sessions, session_key, NULL);
-                                debug("Session finalized\n");
-                            }
-                            b = e + 1;
-                            i = 0;
+                        const char* end = strcrlf(start);
+                        strncpy(command, start, end - start);
+                        start = end;
+                        debug("Received command: %s\n", command);
+                        int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN, mail_path);
+                        send(fd, reply, strlen(reply), 0);
+                        debug("Sent reply: %s\n", reply);
+                        if (ret < 0) {
+                            close(fd);
+                            FD_CLR(fd, &fds);
+                            free(session);
+                            dict_set(&sessions, session_key, NULL);
+                            debug("Session finalized\n");
                         }
                     }
                 }
