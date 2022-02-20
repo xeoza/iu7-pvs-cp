@@ -212,8 +212,10 @@ int smtp_process_command(char* command, smtp_session_t* session, char* reply, si
     } else if (strstartswith(command, "QUIT")) {
         return smtp_quit(command, session, reply, len);
     } else if (strstartswith(command, "VRFY") || strstartswith(command, "VERIFY")) {
+        snprintf(reply, len, "502 Not implemented\r\n");
+        return 0;
     }
-    snprintf(reply, len, "500\r\n");
+    snprintf(reply, len, "500 Unknown command\r\n");
     return 0;
 }
 
