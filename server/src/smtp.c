@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "list.h"
+#include "maildir.h"
 #include "string_utils.h"
 
 #define REGEX_ATOM "([0-9a-zA-Z\\-]+)"
@@ -125,25 +127,19 @@ static int smtp_data(const char* command, smtp_session_t* session, char* reply, 
 }
 
 static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path) {
-    char date[11] = { 0 };
-    time_t now = time(NULL);
-    struct tm* tm = localtime(&now);
-    strftime(date, sizeof(date), "%Y-%m-%d", tm);
-
     smtp_line_t* recipient = NULL;
     list_foreach(recipient, envelope->recipients, list) {
-        char file_path[512];
-        FILE* file;
-        snprintf(file_path, sizeof(file_path), "%s/%s/%s_%s", mail_path, recipient->data, date, envelope->from);
- 
-        if (!(file = fopen(file_path, "w"))) {
+        char file_name[MAILDIR_NAME_LEN] = { 0 };
+        int fd = maildir_tmp(mail_path, recipient->data, file_name, sizeof(file_name));
+        if (fd < 0) {
             return -1;
         }
         smtp_line_t* line = NULL;
         list_foreach(line, envelope->data, list) {
-            fputs(line->data, file);
+            write(fd, line->data, strlen(line->data));
         }
-        fclose(file);
+        close(fd);
+        maildir_new(mail_path, recipient->data, file_name);
     }
     return 0;
 }
