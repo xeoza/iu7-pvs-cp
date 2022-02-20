@@ -357,14 +357,14 @@ int process_conn_read(conn_t* connection, fd_set* writeFS, logger_t* logger) {
                 int res = process_message(message);
                 if (res < 0) {
                     client_fsm_step(connection->state, CLIENT_FSM_EV_BAD, connection, writeFS);
-                    logger_log(logger, ERROR_LOG, "Bad response from server\n");
+                    logger_log(logger, ERROR_LOG, message);
                     sign_msg = 1;
                     free(message);
 
                 } else if (res == 0) {
                     //nothing
                 } else {
-                    logger_log(logger, INFO_LOG, "Good response from server\n");
+                    logger_log(logger, INFO_LOG, message);
                     client_fsm_step(connection->state, CLIENT_FSM_EV_OK, connection, writeFS);
                     sign_msg = 1;
                     free(message);
