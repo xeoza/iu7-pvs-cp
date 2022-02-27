@@ -79,7 +79,7 @@ int server_start(int port, const dict_t* config) {
 
         for (int fd = 0; fd < nfds; ++fd) {
             char session_key[SESSION_KEY_MAX_LEN] = { 0 };
-            char reply[SERVER_REPLY_MAX_LEN] = { 0 };
+            char reply[SERVER_REPLY_MAX_LEN + 1] = { 0 };
             if (FD_ISSET(fd, &readfds)) {
                 if (fd == server_socket) {
                     struct sockaddr_in client_addr;
@@ -97,6 +97,8 @@ int server_start(int port, const dict_t* config) {
                     session->envelope.from = NULL;
                     session->envelope.recipients = NULL;
                     session->state = INITIAL;
+		    session->buffer = NULL;
+		    session->buffer_size = 0;
                     if (!session) {
                         logger_log(logger, ERROR_LOG, "Session allocation failed. Closing connection...");
                         close(client_socket);
@@ -126,21 +128,51 @@ int server_start(int port, const dict_t* config) {
                         continue;
                     }
 
-                    char buf[SERVER_COMMAND_MAX_LEN] = { 0 };
-                    if (recv(fd, buf, sizeof(buf) - 1, 0) <= 0) {
-                        logger_log(logger, WARNING_LOG, "Socker receive failed. Closing connection...");
+                    char buf[SERVER_COMMAND_MAX_LEN + 1] = { 0 };
+                    if (read(fd, buf, SERVER_COMMAND_MAX_LEN) <= 0) {
+                        logger_log(logger, WARNING_LOG, "Socket receive failed. Closing connection...");
                         close(fd);
                         FD_CLR(fd, &fds);
                         continue;
                     }
+		    // logger_log(logger, INFO_LOG, buf);
 
                     for (const char* start = buf; *start != 0;) {
-                        char command[SERVER_COMMAND_MAX_LEN] = { 0 };
+                        char* command = NULL;
+			size_t command_size = 0;
                         const char* end = strcrlf(start);
-                        strncpy(command, start, end - start);
-                        start = end;
+                        if (!end) {
+			    const size_t len = strlen(start);
+                            smtp_line_t* line = malloc(sizeof(char) * (len + 1) + sizeof(smtp_line_t));
+			    if (line) {
+			        memset(line, 0, sizeof(smtp_line_t) + sizeof(char) * (len + 1));
+			        list_init(&line->list);
+				strncpy(line->data, start, len);
+				if (!session->buffer) {
+                                    session->buffer = &line->list;
+				} else {
+				    list_add_tail(session->buffer, &line->list);
+                                }
+				session->buffer_size += len;
+                            } else {
+			        logger_log(logger, ERROR_LOG, "Failed allocate command buffer");
+			    }
+                            break;
+                        }
+			command_size = end - start + session->buffer_size;
+			command = malloc(sizeof(char) * (command_size + 1));
+			memset(command, 0, command_size + 1);
+			if (session->buffer) {
+			    smtp_line_t* line = NULL;
+			    list_foreach(line, session->buffer, list) {
+                                strcat(command, line->data);
+			    }
+			}
+                        strncat(command, start, end - start);
+                        start = end + 2;
                         logger_log(logger, INFO_LOG, command);
                         int ret = smtp_process_command(command, session, reply, SERVER_REPLY_MAX_LEN, mail_path);
+			free(command);
                         send(fd, reply, strlen(reply), 0);
                         logger_log(logger, INFO_LOG, reply);
                         if (ret < 0) {

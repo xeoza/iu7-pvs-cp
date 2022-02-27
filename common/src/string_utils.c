@@ -45,6 +45,9 @@ const char* strcrlf(const char* str) {
             pp = pattern;
         }
     }
-    return sp;
+    if (*pp != 0) {
+        return NULL;
+    }
+    return sp - 2;
 }
 

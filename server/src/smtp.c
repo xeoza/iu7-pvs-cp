@@ -15,20 +15,25 @@
 #define REGEX_DOMAIN "(" REGEX_ATOM "(\\." REGEX_ATOM ")*)"
 #define REGEX_MAIL "(" REGEX_DOMAIN "@" REGEX_DOMAIN ")"
 
+static void free_smtp_lines(struct list_head* lines) {
+    for (struct list_head *head = lines, *next = head->next; head != NULL;) {
+        free(container_of(head, smtp_line_t, list));
+        if (next != lines) {
+            head = next;
+	    next = head->next;
+        } else {
+            head = NULL;
+        }
+    }
+}
+
 static void envelope_free(smtp_envelope_t* envelope) {
     if (envelope->recipients) {
-        for (struct list_head *head = envelope->recipients, *next = head->next; head != NULL;) {
-            free(container_of(head, smtp_line_t, list));
-            if (next != envelope->recipients) {
-                head = next;
-            } else {
-                head = NULL;
-            }
-        }
+        free_smtp_lines(envelope->recipients);
     }
     envelope->recipients = NULL;
     if (envelope->data) {
-        free(envelope->data);
+        free_smtp_lines(envelope->data);
     }
     envelope->data = NULL;
     if (envelope->from) {
@@ -37,23 +42,32 @@ static void envelope_free(smtp_envelope_t* envelope) {
     envelope->from = NULL;
 }
 
-static void session_reset(smtp_session_t* session, smtp_state_t state) {
+static void buffer_reset(smtp_session_t* session) {
+    if (session->buffer) {
+        free_smtp_lines(session->buffer);
+    }
+    session->buffer = NULL;
+    session->buffer_size = 0;
+}
+
+void smtp_session_reset(smtp_session_t* session, smtp_state_t state) {
+    buffer_reset(session);
     session->state = state;
     envelope_free(&session->envelope);
 }
 
 int smtp_start_session(smtp_session_t* session, char* reply, size_t len) {
-    session_reset(session, INITIAL);
+    smtp_session_reset(session, INITIAL);
     snprintf(reply, len, "220\r\n");
     return 0;
 }
 
 void smtp_free_session(smtp_session_t* session) {
-    session_reset(session, INITIAL);
+    smtp_session_reset(session, INITIAL);
 }
 
 static int smtp_ehlo(const char* command, smtp_session_t* session, char* reply, size_t len) {
-    session_reset(session, ESTABLISHED);
+    smtp_session_reset(session, ESTABLISHED);
     snprintf(reply, len, "250\r\n");
     return 0;
 }
@@ -145,18 +159,18 @@ static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path)
 }
 
 static int smtp_read_data(const char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path) {
-    if (strcmp(".\r\n", command) == 0) {
+    if (strcmp(".", command) == 0) {
         if (envelope_save(&session->envelope, mail_path)) {
             snprintf(reply, len, "500\r\n");
         } else {
             snprintf(reply, len, "250 OK\r\n");
         }
-        session_reset(session, ESTABLISHED);
+        smtp_session_reset(session, ESTABLISHED);
     } else {
         const size_t data_len = strlen(command);
         smtp_line_t* data = (smtp_line_t*)malloc(sizeof(smtp_line_t) + sizeof(char) * (data_len + 1));
-        memset(data, 0, sizeof(smtp_line_t) + sizeof(char) * (data_len + 1));
         if (data) {
+            memset(data, 0, sizeof(smtp_line_t) + sizeof(char) * (data_len + 1));
             list_init(&data->list);
             strncpy(data->data, command, data_len);
             if (!session->envelope.data) {
@@ -176,7 +190,7 @@ static int smtp_reset(char* command, smtp_session_t* session, char* reply, size_
     if (strcmp("RSET", command) != 0) {
         snprintf(reply, len, "500\r\n");
     } else {
-        session_reset(session, session->state == INITIAL ? INITIAL : ESTABLISHED);
+        smtp_session_reset(session, session->state == INITIAL ? INITIAL : ESTABLISHED);
         snprintf(reply, len, "250 OK\r\n");
     }
     return 0;
@@ -195,6 +209,7 @@ static int smtp_quit(char* command, smtp_session_t* session, char* reply, size_t
 
 
 int smtp_process_command(char* command, smtp_session_t* session, char* reply, size_t len, const char* mail_path) {
+    buffer_reset(session);
     if (session->state == MAIL_DATA) {
         return smtp_read_data(command, session, reply, len, mail_path);
     }

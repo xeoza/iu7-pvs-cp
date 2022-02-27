@@ -24,10 +24,14 @@ typedef enum smtp_state {
 } smtp_state_t;
 
 typedef struct smtp_session {
+    struct list_head* buffer;
+    size_t buffer_size;
     smtp_state_t state;
     smtp_envelope_t envelope;
     struct in_addr addr;
 } smtp_session_t;
+
+void smtp_session_reset(smtp_session_t* session, smtp_state_t state);
 
 int smtp_start_session(smtp_session_t* session, char* reply, size_t len);
 
