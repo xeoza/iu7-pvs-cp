@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "debug.h"
 #include "logger.h"
@@ -52,6 +53,7 @@ int server_start(int port, const dict_t* config) {
     if (!logger) {
         return -1;
     }
+    signal(SIGPIPE, SIG_IGN);
 
     int server_socket = open_server_socket(port);
     if (server_socket == -1) {

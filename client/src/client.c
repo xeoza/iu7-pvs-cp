@@ -109,7 +109,7 @@ int process_mail_files(mail_files_t* mail_files, int start_ind, int end_ind, log
         mail_count++;
     }
     logger_log(logger, INFO_LOG, "Mails pack parsed\n");
-    //Затем по идее врубить селект, создать соединения, обработать их и закрыть
+    //Затем по идее вызвать селект, создать соединения, обработать их и закрыть
     if (process_mails(mails, mail_count, logger, pipeDescr) != 0) {
         for (int i = 0; i < mail_count; i++) {
             clear_mail(mails[i]);
