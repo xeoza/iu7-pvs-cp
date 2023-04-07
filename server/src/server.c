@@ -18,10 +18,22 @@
 #include "string_utils.h"
 #include "tree.h"
 
+#ifdef MODIFY
+#include <small/allocator.h>
+#include <small/linear.h>
+#include <small/pool.h>
+#endif
+
 #define SESSION_KEY_MAX_LEN 8
 
 #define SERVER_REPLY_MAX_LEN 256
 #define SERVER_COMMAND_MAX_LEN 1024
+
+static int server_running = 0;
+
+static void server_stop(int signal) {
+    server_running = 0;
+}
 
 static int open_server_socket(int port) {
     int ret = socket(AF_INET, SOCK_STREAM, 0);
@@ -53,7 +65,9 @@ int server_start(int port, const dict_t* config) {
     if (!logger) {
         return -1;
     }
-    signal(SIGPIPE, SIG_IGN);
+    sig_t old_sigpipe = signal(SIGPIPE, SIG_IGN);
+    sig_t old_sigint = signal(SIGINT, server_stop);
+    sig_t old_sigterm = signal(SIGTERM, server_stop);
 
     int server_socket = open_server_socket(port);
     if (server_socket == -1) {
@@ -71,7 +85,8 @@ int server_start(int port, const dict_t* config) {
     FD_ZERO(&readfds);
     FD_SET(server_socket, &fds);
     
-    while (1) {
+    server_running = 1;
+    while (server_running) {
         readfds = fds;
         if (pselect(nfds, &readfds, NULL, NULL, NULL, NULL) == -1) {
             logger_log(logger, ERROR_LOG, "Pselect call failed. Stopping server...");
@@ -93,7 +108,13 @@ int server_start(int port, const dict_t* config) {
                         debug("Failed accept: errno=%d\n", errno);
                         continue;
                     }
+#ifdef MODIFY
+                    static void* pool = NULL;
+                    if (!pool) pool = GetPoolAllocator("session", sizeof(smtp_session_t), 64);
+                    smtp_session_t* session = (smtp_session_t*)Allocate(pool, sizeof(smtp_session_t));
+#else
                     smtp_session_t* session = (smtp_session_t*)malloc(sizeof(smtp_session_t));
+#endif
                     session->addr = client_addr.sin_addr;
                     session->envelope.data = NULL;
                     session->envelope.from = NULL;
@@ -109,7 +130,14 @@ int server_start(int port, const dict_t* config) {
                     snprintf(session_key, SESSION_KEY_MAX_LEN, "%d", client_socket);
                     if (dict_set(&sessions, session_key, (void*)session) != 0) {
                         logger_log(logger, ERROR_LOG, "Session allocation failed. Closing connection...");
+#ifdef MODIFY
+                        static void* pool = NULL;
+                        if (!pool) pool = GetPoolAllocator("session", sizeof(smtp_session_t), 64);
+                        Deallocate(pool, session);
+#else
                         free(session);
+#endif
+ 
                         close(client_socket);
                         continue;
                     }
@@ -143,9 +171,15 @@ int server_start(int port, const dict_t* config) {
                         char* command = NULL;
 			size_t command_size = 0;
                         const char* end = strcrlf(start);
-                        if (!end) {
+                if (!end) {
 			    const size_t len = strlen(start);
-                            smtp_line_t* line = malloc(sizeof(char) * (len + 1) + sizeof(smtp_line_t));
+#ifdef MODIFY2
+                static void* linear = NULL;
+                if (!linear) linear = GetLinearAllocator("line", 10*1024*1024);
+                smtp_line_t* line = Allocate(linear, sizeof(char) * (len + 1) + sizeof(smtp_line_t));
+#else
+                smtp_line_t* line = malloc(sizeof(char) * (len + 1) + sizeof(smtp_line_t));
+#endif
 			    if (line) {
 			        memset(line, 0, sizeof(smtp_line_t) + sizeof(char) * (len + 1));
 			        list_init(&line->list);
@@ -181,7 +215,13 @@ int server_start(int port, const dict_t* config) {
                             logger_log(logger, INFO_LOG, "Client sent QUIT command. Closing connection...");
                             close(fd);
                             FD_CLR(fd, &fds);
+#ifdef MODIFY
+                            static void* pool = NULL;
+                            if (!pool) pool = GetPoolAllocator("session", sizeof(smtp_session_t), 64);
+                            Deallocate(pool, session);
+#else
                             free(session);
+#endif
                             dict_set(&sessions, session_key, NULL);
                             logger_log(logger, INFO_LOG, "Session finished");
                         }
@@ -196,11 +236,21 @@ int server_start(int port, const dict_t* config) {
     tree_node_t* node = NULL;
     tree_foreach(sessions.root, node) {
         smtp_session_t* session = (smtp_session_t*)node->value;
+#ifdef MODIFY
+        static void* pool = NULL;
+        if (!pool) pool = GetPoolAllocator("session", sizeof(smtp_session_t), 64);
+        Deallocate(pool, session);
+#else
         free(session);
+#endif
     }
     dict_free(&sessions);
     logger_free(logger);
     close(server_socket);
+
+    signal(SIGPIPE, old_sigpipe);
+    signal(SIGINT, old_sigint);
+    signal(SIGTERM, old_sigterm);
     return 0;
 }
 

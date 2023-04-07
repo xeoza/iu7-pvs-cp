@@ -20,12 +20,16 @@ char* strtrim(char* str) {
     return start;
 }
 
-int strstartswith(const char* str, const char* prefix) {
+int strstartswith(const char* str, const char* prefix, int ignore_case) {
     assert(str);
     assert(prefix);
     size_t i;
     for (i = 0; str[i] != 0 && prefix[i] != 0; ++i) {
-        if (str[i] != prefix[i]) {
+        if (ignore_case) {
+            if (tolower(str[i]) != tolower(prefix[i])) {
+                return 0;
+            }
+        } else if (str[i] != prefix[i]) {
             return 0;
         }
     }

@@ -7,6 +7,11 @@
 
 #include "list.h"
 
+#ifdef MODIFY
+#include <small/allocator.h>
+#include <small/pool.h>
+#endif
+
 #define TREE_KEY_MAX_LEN 128
 
 typedef struct tree_node_struct tree_node_t;
@@ -22,7 +27,13 @@ struct tree_node_struct {
 };
 
 static inline tree_node_t* make_tree_node(const char* key, void* value) {
+#ifdef MODIFY
+    static void* pool = NULL;
+    if (!pool) pool = GetPoolAllocator("tree", sizeof(tree_node_t), 64);
+    tree_node_t* node = (tree_node_t*)Allocate(pool, sizeof(tree_node_t));
+#else
     tree_node_t* node = (tree_node_t*)malloc(sizeof(tree_node_t));
+#endif
     if (!node) {
         return NULL;
     }

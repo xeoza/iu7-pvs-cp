@@ -10,7 +10,13 @@ void free_tree_node(tree_node_t* node) {
     }
     free_tree_node(node->right);
     free_tree_node(node->left);
+#ifdef MODIFY
+    static void* pool = NULL;
+    if (!pool) pool = GetPoolAllocator("tree", sizeof(tree_node_t), 64);
+    Deallocate(pool, node);
+#else
     free(node);
+#endif
 }
 
 static void right_rotate(tree_node_t** root, tree_node_t* node) {

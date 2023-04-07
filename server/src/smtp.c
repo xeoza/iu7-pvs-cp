@@ -75,7 +75,7 @@ static int smtp_ehlo(const char* command, smtp_session_t* session, char* reply, 
 static int smtp_mail(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
     regmatch_t matches[2];
-    regcomp(&regex, "^MAIL FROM:<" REGEX_MAIL ">.*$", REG_EXTENDED);
+    regcomp(&regex, "^MAIL FROM:<" REGEX_MAIL ">.*$", REG_EXTENDED | REG_ICASE);
     if (regexec(&regex, command, 2, matches, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != ESTABLISHED) {
@@ -99,7 +99,7 @@ static int smtp_mail(const char* command, smtp_session_t* session, char* reply, 
 static int smtp_rcpt(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
     regmatch_t matches[2];
-    regcomp(&regex, "^RCPT TO:<" REGEX_MAIL ">$", REG_EXTENDED);
+    regcomp(&regex, "^RCPT TO:<" REGEX_MAIL ">$", REG_EXTENDED | REG_ICASE);
     if (regexec(&regex, command, 2, matches, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != MAIL_RCPT) {
@@ -127,7 +127,7 @@ static int smtp_rcpt(const char* command, smtp_session_t* session, char* reply, 
 
 static int smtp_data(const char* command, smtp_session_t* session, char* reply, size_t len) {
     regex_t regex;
-    regcomp(&regex, "^DATA$", REG_EXTENDED);
+    regcomp(&regex, "^DATA$", REG_EXTENDED | REG_ICASE);
     if (regexec(&regex, command, 0, NULL, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else if (session->state != MAIL_RCPT) {
@@ -142,6 +142,7 @@ static int smtp_data(const char* command, smtp_session_t* session, char* reply, 
 
 static int envelope_save(const smtp_envelope_t* envelope, const char* mail_path) {
     smtp_line_t* recipient = NULL;
+    return 0;
     list_foreach(recipient, envelope->recipients, list) {
         char file_name[MAILDIR_NAME_LEN] = { 0 };
         int fd = maildir_tmp(mail_path, recipient->data, file_name, sizeof(file_name));
@@ -178,7 +179,7 @@ static int smtp_read_data(const char* command, smtp_session_t* session, char* re
             } else {
                 list_add(session->envelope.data, &data->list);
             }
-            snprintf(reply, len, "354\r\n");
+            // snprintf(reply, len, "354\r\n");
         } else {
             snprintf(reply, len, "500\r\n");
         }
@@ -187,7 +188,9 @@ static int smtp_read_data(const char* command, smtp_session_t* session, char* re
 }
 
 static int smtp_reset(char* command, smtp_session_t* session, char* reply, size_t len) {
-    if (strcmp("RSET", command) != 0) {
+    regex_t regex;
+    regcomp(&regex, "^RSET$", REG_EXTENDED | REG_ICASE);
+    if (regexec(&regex, command, 0, NULL, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else {
         smtp_session_reset(session, session->state == INITIAL ? INITIAL : ESTABLISHED);
@@ -197,7 +200,9 @@ static int smtp_reset(char* command, smtp_session_t* session, char* reply, size_
 }
 
 static int smtp_quit(char* command, smtp_session_t* session, char* reply, size_t len) {
-    if (strcmp("QUIT", command) != 0) {
+    regex_t regex;
+    regcomp(&regex, "^QUIT$", REG_EXTENDED | REG_ICASE);
+    if (regexec(&regex, command, 0, NULL, 0) != 0) {
         snprintf(reply, len, "500\r\n");
     } else {
         smtp_free_session(session);
@@ -214,19 +219,19 @@ int smtp_process_command(char* command, smtp_session_t* session, char* reply, si
         return smtp_read_data(command, session, reply, len, mail_path);
     }
     command = strtrim(command);
-    if (strstartswith(command, "EHLO")) {
+    if (strstartswith(command, "EHLO", 1) || strstartswith(command, "HELO", 1)) {
         return smtp_ehlo(command, session, reply, len);
-    } else if (strstartswith(command, "MAIL")) {
+    } else if (strstartswith(command, "MAIL", 1)) {
         return smtp_mail(command, session, reply, len);
-    } else if (strstartswith(command, "RCPT")) {
+    } else if (strstartswith(command, "RCPT", 1)) {
         return smtp_rcpt(command, session, reply, len);
-    } else if (strstartswith(command, "DATA")) {
+    } else if (strstartswith(command, "DATA", 1)) {
         return smtp_data(command, session, reply, len);
-    } else if (strstartswith(command, "RSET")) {
+    } else if (strstartswith(command, "RSET", 1)) {
         return smtp_reset(command, session, reply, len);
-    } else if (strstartswith(command, "QUIT")) {
+    } else if (strstartswith(command, "QUIT", 1)) {
         return smtp_quit(command, session, reply, len);
-    } else if (strstartswith(command, "VRFY") || strstartswith(command, "VERIFY")) {
+    } else if (strstartswith(command, "VRFY", 1) || strstartswith(command, "VERIFY", 1)) {
         snprintf(reply, len, "502 Not implemented\r\n");
         return 0;
     }

@@ -1,5 +1,13 @@
-CPPFLAGS += -I./include
-CFLAGS += -std=c99 -D_GNU_SOURCE -g -O0
+CPPFLAGS += -I./include -I/Users/zhukovdan/git/repos/small/lib
+CFLAGS += -std=c99 -D_GNU_SOURCE
+
+ifdef PROFILE
+CFLAGS += -g -O0 -fpass-plugin=/Users/zhukovdan/git/repos/small/build/llvm/profiler/SmallProfilerPass.dylib
+endif
+
+ifdef MODIFY
+CFLAGS += -DMODIFY
+endif
 
 SOURCES = $(wildcard ./src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
